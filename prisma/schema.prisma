@@ -1,0 +1,381 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+}
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+enum TradeMode {
+  SELL
+  SWAP
+  BOTH
+}
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  RESERVED
+  SOLD
+  SWAPPED
+  INACTIVE
+  REMOVED
+}
+enum ListingCategory {
+  CD
+  PHOTOCARD
+  GOODS
+  OTHER
+}
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  SHIPPING_PENDING
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+  REFUNDED
+}
+enum SwapStatus {
+  PROPOSED
+  COUNTERED
+  ACCEPTED
+  SHIPPING_PENDING
+  SHIPPED_PARTIAL
+  SHIPPED_BOTH
+  RECEIVED_PARTIAL
+  COMPLETED
+  REJECTED
+  CANCELLED
+  DISPUTED
+}
+enum PaymentProvider {
+  LINEPAY
+  ECPAY_CREDIT
+  ECPAY_APPLEPAY
+}
+enum PaymentStatus {
+  INITIATED
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+enum LogisticsProvider {
+  ECPAY_CVS
+}
+enum LogisticsStatus {
+  DRAFT
+  STORE_SELECTED
+  CREATED
+  LABEL_READY
+  SHIPPED
+  DELIVERED
+  RETURNED
+  FAILED
+}
+enum CvsType {
+  UNIMARTC2C
+  FAMIC2C
+}
+enum ReportStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  role         UserRole   @default(USER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  deletedAt    DateTime?  @map("deleted_at")
+
+  profile         UserProfile?
+  refreshTokens   RefreshToken[]
+  listings        Listing[]       @relation("SellerListings")
+  favorites       Favorite[]
+  boughtOrders    Order[]         @relation("BuyerOrders")
+  soldOrders      Order[]         @relation("SellerOrders")
+  proposedSwaps   SwapProposal[]  @relation("ProposedSwaps")
+  receivedSwaps   SwapProposal[]  @relation("ReceivedSwaps")
+  authoredReviews Review[]        @relation("AuthoredReviews")
+  receivedReviews Review[]        @relation("ReceivedReviews")
+  reports         Report[]        @relation("ReportAuthor")
+  adminAuditLogs  AdminAuditLog[] @relation("AdminActor")
+
+  @@index([role, status])
+  @@map("users")
+}
+
+model UserProfile {
+  userId           String  @id @map("user_id") @db.Uuid
+  nickname         String
+  avatarUrl        String? @map("avatar_url")
+  intro            String?
+  shippingRealName String? @map("shipping_real_name")
+  shippingPhone    String? @map("shipping_phone")
+  defaultAddress   Json?   @map("default_address")
+  ratingAverage    Decimal @default(0) @map("rating_average") @db.Decimal(3, 2)
+  completedTrades  Int     @default(0) @map("completed_trades")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("user_profiles")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, revokedAt])
+  @@map("refresh_tokens")
+}
+
+model Listing {
+  id             String          @id @default(uuid()) @db.Uuid
+  sellerId       String          @map("seller_id") @db.Uuid
+  title          String
+  category       ListingCategory
+  tradeMode      TradeMode       @map("trade_mode")
+  price          Int?
+  currency       String          @default("TWD")
+  conditionGrade String          @map("condition_grade")
+  albumEra       String?         @map("album_era")
+  memberTag      String?         @map("member_tag")
+  versionName    String?         @map("version_name")
+  isOfficial     Boolean         @default(false) @map("is_official")
+  proofNote      String?         @map("proof_note")
+  description    String
+  status         ListingStatus   @default(DRAFT)
+  viewCount      Int             @default(0) @map("view_count")
+  publishedAt    DateTime?       @map("published_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  deletedAt      DateTime?       @map("deleted_at")
+
+  seller            User               @relation("SellerListings", fields: [sellerId], references: [id])
+  images            ListingImage[]
+  favorites         Favorite[]
+  orderItems        OrderItem[]
+  swapProposalItems SwapProposalItem[]
+  reports           Report[]
+
+  @@index([status, tradeMode, createdAt])
+  @@index([sellerId, status])
+  @@index([category, memberTag, albumEra])
+  @@map("listings")
+}
+
+model ListingImage {
+  id        String   @id @default(uuid()) @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  url       String
+  altText   String?  @map("alt_text")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  @@index([listingId, sortOrder])
+  @@map("listing_images")
+}
+
+model Favorite {
+  userId    String   @map("user_id") @db.Uuid
+  listingId String   @map("listing_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  @@id([userId, listingId])
+  @@map("favorites")
+}
+
+model Order {
+  id                String             @id @default(uuid()) @db.Uuid
+  buyerId           String             @map("buyer_id") @db.Uuid
+  sellerId          String             @map("seller_id") @db.Uuid
+  status            OrderStatus        @default(PENDING_PAYMENT)
+  subtotalAmount    Int                @map("subtotal_amount")
+  shippingAmount    Int                @default(0) @map("shipping_amount")
+  totalAmount       Int                @map("total_amount")
+  paymentProvider   PaymentProvider?   @map("payment_provider")
+  logisticsProvider LogisticsProvider? @map("logistics_provider")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  cancelledAt       DateTime?          @map("cancelled_at")
+
+  buyer               User                 @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller              User                 @relation("SellerOrders", fields: [sellerId], references: [id])
+  items               OrderItem[]
+  paymentTransactions PaymentTransaction[]
+  shipment            LogisticsShipment?
+  reviews             Review[]
+  reports             Report[]
+  @@index([buyerId, status, createdAt])
+  @@index([sellerId, status, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(uuid()) @db.Uuid
+  orderId   String @map("order_id") @db.Uuid
+  listingId String @map("listing_id") @db.Uuid
+  title     String
+  price     Int
+  quantity  Int    @default(1)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id])
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model PaymentTransaction {
+  id                    String          @id @default(uuid()) @db.Uuid
+  orderId               String          @map("order_id") @db.Uuid
+  provider              PaymentProvider
+  providerTradeNo       String?         @map("provider_trade_no")
+  providerTransactionId String?         @map("provider_transaction_id")
+  status                PaymentStatus   @default(INITIATED)
+  idempotencyKey        String?         @unique @map("idempotency_key")
+  rawPayload            Json?           @map("raw_payload")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  @@index([orderId, provider, status])
+  @@index([providerTransactionId])
+  @@map("payment_transactions")
+}
+
+model LogisticsShipment {
+  id             String            @id @default(uuid()) @db.Uuid
+  orderId        String            @unique @map("order_id") @db.Uuid
+  provider       LogisticsProvider
+  cvsType        CvsType?          @map("cvs_type")
+  storeId        String?           @map("store_id")
+  storeName      String?           @map("store_name")
+  storeAddress   String?           @map("store_address")
+  shipmentNo     String?           @map("shipment_no")
+  status         LogisticsStatus   @default(DRAFT)
+  idempotencyKey String?           @unique @map("idempotency_key")
+  rawPayload     Json?             @map("raw_payload")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  @@index([provider, status])
+  @@map("logistics_shipments")
+}
+
+model SwapProposal {
+  id                   String     @id @default(uuid()) @db.Uuid
+  proposerId           String     @map("proposer_id") @db.Uuid
+  receiverId           String     @map("receiver_id") @db.Uuid
+  status               SwapStatus @default(PROPOSED)
+  cashAdjustmentAmount Int        @default(0) @map("cash_adjustment_amount")
+  logisticsMode        String?    @map("logistics_mode")
+  note                 String?
+  createdAt            DateTime   @default(now()) @map("created_at")
+  updatedAt            DateTime   @updatedAt @map("updated_at")
+  completedAt          DateTime?  @map("completed_at")
+
+  proposer User               @relation("ProposedSwaps", fields: [proposerId], references: [id])
+  receiver User               @relation("ReceivedSwaps", fields: [receiverId], references: [id])
+  items    SwapProposalItem[]
+  reviews  Review[]
+  reports  Report[]
+  @@index([proposerId, status, createdAt])
+  @@index([receiverId, status, createdAt])
+  @@map("swap_proposals")
+}
+
+model SwapProposalItem {
+  id             String @id @default(uuid()) @db.Uuid
+  swapProposalId String @map("swap_proposal_id") @db.Uuid
+  listingId      String @map("listing_id") @db.Uuid
+  side           String
+
+  swapProposal SwapProposal @relation(fields: [swapProposalId], references: [id], onDelete: Cascade)
+  listing      Listing      @relation(fields: [listingId], references: [id])
+  @@index([swapProposalId, side])
+  @@map("swap_proposal_items")
+}
+
+model Review {
+  id             String    @id @default(uuid()) @db.Uuid
+  authorId       String    @map("author_id") @db.Uuid
+  targetUserId   String    @map("target_user_id") @db.Uuid
+  orderId        String?   @map("order_id") @db.Uuid
+  swapProposalId String?   @map("swap_proposal_id") @db.Uuid
+  score          Int
+  content        String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  author       User          @relation("AuthoredReviews", fields: [authorId], references: [id])
+  targetUser   User          @relation("ReceivedReviews", fields: [targetUserId], references: [id])
+  order        Order?        @relation(fields: [orderId], references: [id])
+  swapProposal SwapProposal? @relation(fields: [swapProposalId], references: [id])
+  @@unique([authorId, orderId])
+  @@unique([authorId, swapProposalId])
+  @@index([targetUserId, createdAt])
+  @@map("reviews")
+}
+
+model Report {
+  id             String       @id @default(uuid()) @db.Uuid
+  authorId       String       @map("author_id") @db.Uuid
+  listingId      String?      @map("listing_id") @db.Uuid
+  orderId        String?      @map("order_id") @db.Uuid
+  swapProposalId String?      @map("swap_proposal_id") @db.Uuid
+  reason         String
+  detail         String?
+  status         ReportStatus @default(OPEN)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  author       User          @relation("ReportAuthor", fields: [authorId], references: [id])
+  listing      Listing?      @relation(fields: [listingId], references: [id])
+  order        Order?        @relation(fields: [orderId], references: [id])
+  swapProposal SwapProposal? @relation(fields: [swapProposalId], references: [id])
+  @@index([status, createdAt])
+  @@map("reports")
+}
+
+model AdminAuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @map("actor_id") @db.Uuid
+  action    String
+  target    String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("AdminActor", fields: [actorId], references: [id])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@map("admin_audit_logs")
+}
