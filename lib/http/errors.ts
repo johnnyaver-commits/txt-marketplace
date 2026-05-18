@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { AuthError } from '@/modules/auth/errors';
 import { fail } from '@/lib/api-response';
+import { ServiceUnavailableError } from '@/lib/db/availability';
 
 export function jsonError(error: unknown) {
   if (error instanceof ZodError) {
@@ -10,6 +11,9 @@ export function jsonError(error: unknown) {
   if (error instanceof AuthError) {
     const status = error.code === 'UNAUTHORIZED' || error.code === 'INVALID_CREDENTIALS' ? 401 : error.code === 'EMAIL_ALREADY_EXISTS' ? 409 : 400;
     return NextResponse.json(fail(error.code, error.message), { status });
+  }
+  if (error instanceof ServiceUnavailableError) {
+    return NextResponse.json(fail('DATABASE_NOT_CONFIGURED', error.message), { status: 503 });
   }
   console.error(error);
   return NextResponse.json(fail('INTERNAL_ERROR', '系統暫時無法處理請求'), { status: 500 });

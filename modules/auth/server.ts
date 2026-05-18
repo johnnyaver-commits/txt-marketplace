@@ -1,12 +1,14 @@
 import { cookies } from 'next/headers';
 import { env } from '@/lib/env';
 import { prisma } from '@/lib/db/prisma';
+import { assertDatabaseConfigured } from '@/lib/db/availability';
 import { createPrismaAuthRepository } from './repository.prisma';
 import { createAuthService } from './service';
 import { ACCESS_COOKIE, REFRESH_COOKIE, authCookieOptions, clearCookieOptions } from './cookies';
 import { verifyAccessToken } from './tokens';
 
 export function getAuthService() {
+  assertDatabaseConfigured();
   return createAuthService({
     repo: createPrismaAuthRepository(prisma),
     pepper: env.passwordPepper,
