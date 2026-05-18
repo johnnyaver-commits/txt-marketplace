@@ -36,6 +36,7 @@
 5. LINE Pay `transactionId` 一律用 string。
 6. 平台不得保存完整卡號、CVV 或 Apple Pay 原始敏感支付資料。
 7. C2C 物流沒有標準逆物流；爭議與退貨需管理員流程。
+8. 前端商品列表、詳情、上架與登入註冊頁第一版已完成，先以 mock 商品資料展示 UI，待資料庫連線後改讀真實 API。
 
 ## 第一階段開發順序
 1. Auth：註冊、登入、登出、HttpOnly Cookie、refresh token rotation。（第一版已完成：register/login/logout/me、Argon2id、JWT cookies、refresh token hash）

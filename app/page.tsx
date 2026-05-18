@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { Heart, Search, ShieldCheck, Sparkles, Truck } from 'lucide-react';
+import { AppHeader } from '@/components/app-header';
 import { ListingCard } from '@/components/listing/listing-card';
 
 const samples = [
@@ -16,22 +18,7 @@ const trustItems = [
 export default function Home() {
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
-      <header className="flex items-center justify-between rounded-full border border-white/70 bg-white/55 px-5 py-3 shadow-sm backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-full bg-[#32283a] text-white"><Sparkles size={18} /></div>
-          <div>
-            <p className="text-sm font-bold">TXT Trading Platform</p>
-            <p className="text-xs text-[#6f6677]">MOA 周邊買賣與交換</p>
-          </div>
-        </div>
-        <nav className="hidden items-center gap-6 text-sm font-medium text-[#6f6677] md:flex">
-          <a href="#listings">新上架</a>
-          <a href="#swap">可交換</a>
-          <a href="#trust">交易保障</a>
-          <a href="#admin">管理後台</a>
-        </nav>
-        <button className="rounded-full bg-[#32283a] px-4 py-2 text-sm font-semibold text-white">登入 / 註冊</button>
-      </header>
+      <AppHeader />
 
       <section className="grid items-center gap-10 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
         <div>
@@ -45,8 +32,8 @@ export default function Home() {
             支援小卡、專輯、周邊小物；商品可標示可售、可換或售換皆可。MVP 採單一賣家訂單，金流預留綠界信用卡 / Apple Pay 與 LINE Pay，物流預留 7-ELEVEN / 全家 C2C。
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button className="rounded-full bg-[#32283a] px-6 py-3 font-bold text-white shadow-lg shadow-[#32283a]/20">開始瀏覽</button>
-            <button className="rounded-full bg-white/75 px-6 py-3 font-bold text-[#654f73] ring-1 ring-[#8f7aa2]/15">建立商品草稿</button>
+            <Link href="/listings" className="rounded-full bg-[#32283a] px-6 py-3 text-center font-bold text-white shadow-lg shadow-[#32283a]/20">開始瀏覽</Link>
+            <Link href="/listings/new" className="rounded-full bg-white/75 px-6 py-3 text-center font-bold text-[#654f73] ring-1 ring-[#8f7aa2]/15">建立商品草稿</Link>
           </div>
         </div>
         <div className="k-card rounded-[36px] p-5">

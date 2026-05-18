@@ -1,3 +1,5 @@
+import Image from 'next/image';
+import Link from 'next/link';
 import { formatTwd } from '@/lib/utils';
 import { TradeModeBadge, type TradeMode } from './trade-mode-badge';
 
@@ -9,15 +11,18 @@ export type ListingCardProps = {
   albumEra: string;
   condition: string;
   coverGradient?: string;
+  coverUrl?: string | null;
+  href?: string;
   meta: string;
 };
 
 export function ListingCard(props: ListingCardProps) {
-  return (
-    <article className="k-card overflow-hidden rounded-[28px]">
+  const content = (
+    <article className="k-card h-full overflow-hidden rounded-[28px] transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
       <div className={`relative aspect-square ${props.coverGradient ?? 'bg-gradient-to-br from-[#f7dce6] via-[#f0e7f6] to-[#cce8df]'}`}>
+        {props.coverUrl ? <Image src={props.coverUrl} alt={props.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
         <div className="absolute left-4 top-4"><TradeModeBadge mode={props.tradeMode} /></div>
-        <div className="absolute inset-8 rounded-[24px] border border-white/70 bg-white/35 shadow-inner" />
+        {!props.coverUrl ? <div className="absolute inset-8 rounded-[24px] border border-white/70 bg-white/35 shadow-inner" /> : <div className="absolute inset-0 bg-gradient-to-t from-[#32283a]/30 to-transparent" />}
         <div className="absolute bottom-5 left-5 rounded-2xl bg-white/80 px-4 py-2 text-sm font-semibold text-[#654f73]">
           TXT OFFICIAL
         </div>
@@ -41,4 +46,7 @@ export function ListingCard(props: ListingCardProps) {
       </div>
     </article>
   );
+
+  if (props.href) return <Link href={props.href}>{content}</Link>;
+  return content;
 }

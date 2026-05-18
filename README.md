@@ -44,6 +44,18 @@ prisma/schema.prisma  Database schema
 docs/SDD.md           System design document
 ```
 
+## Frontend Pages
+
+目前可瀏覽的前端頁面：
+
+- `/`：韓系柔和首頁
+- `/listings`：商品列表頁，含搜尋/篩選 UI 與 mock 商品資料
+- `/listings/[id]`：商品詳情頁，含購買/交換 CTA
+- `/listings/new`：上架商品表單 UI
+- `/auth`：登入 / 註冊 UI
+
+> 線上版目前先展示 UI 與 API 結構。待接上 Neon PostgreSQL 後，表單會改成實際送出。
+
 ## Listings API
 
 目前商品系統第一版已提供：
