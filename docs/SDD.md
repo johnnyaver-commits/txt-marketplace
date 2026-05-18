@@ -39,7 +39,7 @@
 
 ## 第一階段開發順序
 1. Auth：註冊、登入、登出、HttpOnly Cookie、refresh token rotation。（第一版已完成：register/login/logout/me、Argon2id、JWT cookies、refresh token hash）
-2. Listings：上架、列表、詳情、編輯、下架、圖片儲存。
+2. Listings：上架、列表、詳情、編輯、下架、圖片儲存。（第一版已完成：CRUD API、owner 權限檢查、soft delete、列表篩選）
 3. Orders：單一賣家建單、狀態機、庫存/商品狀態鎖定。
 4. Payments：LINE Pay request/confirm、綠界 checkout、Webhook idempotency。
 5. Logistics：門市清單、建立 C2C shipment、物流 webhook。

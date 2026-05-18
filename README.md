@@ -9,6 +9,7 @@
 - Tailwind CSS 4
 - PostgreSQL + Prisma 5.22
 - Zod / Vitest
+- Listings：上架 API、列表 API、詳情 API、編輯 API、下架 API
 - LINE Pay、綠界金流、綠界物流整合預留
 
 ## Local Development
@@ -42,6 +43,18 @@ lib/                  Shared utilities
 prisma/schema.prisma  Database schema
 docs/SDD.md           System design document
 ```
+
+## Listings API
+
+目前商品系統第一版已提供：
+
+- `GET /api/listings`：商品列表，支援 `q/category/tradeMode/memberTag/albumEra/page/pageSize`
+- `POST /api/listings`：登入會員建立商品，上架後預設 `ACTIVE`
+- `GET /api/listings/:id`：商品詳情
+- `PATCH /api/listings/:id`：賣家編輯自己的商品
+- `DELETE /api/listings/:id`：賣家 soft delete，下架為 `INACTIVE`
+
+商品服務層已包含 owner 權限檢查、售價驗證、SWAP/BOTH 相容篩選與 repository injection 測試。
 
 ## Auth API
 
