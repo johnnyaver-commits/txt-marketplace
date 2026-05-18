@@ -43,6 +43,22 @@ prisma/schema.prisma  Database schema
 docs/SDD.md           System design document
 ```
 
+## Auth API
+
+目前已完成第一版會員 API：
+
+- `POST /api/auth/register`：註冊並設定 HttpOnly cookies
+- `POST /api/auth/login`：登入並設定 HttpOnly cookies
+- `POST /api/auth/logout`：撤銷 refresh token 並清除 cookies
+- `GET /api/me`：讀取目前登入會員
+
+安全設計：
+
+- 密碼使用 Argon2id + pepper
+- Access token / refresh token 存 HttpOnly Cookie
+- refresh token 只存 SHA-256 hash
+- Auth service 可注入 repository，方便測試與未來替換資料層
+
 ## MVP Rule
 
 第一版只做「單一賣家單一訂單」，不做跨賣家購物車或平台自動拆帳，避免金流平台商法遵與對帳風險。
